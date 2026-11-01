@@ -1,18 +1,51 @@
-import {CONFIG} from "./config.js";
+import {CONFIG,activateScenario} from "./config.js";
+import {SCENARIOS} from "./scenarios.js";
 import {newGame,euros,investment,validate,calculate,advance,ranking} from "./engine.js";
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const portal=document.body.dataset.portal;
-let game;
-try{game=JSON.parse(localStorage.getItem(CONFIG.storageKey))||newGame();if(!Array.isArray(game.teams)||game.teams.length!==4||!Array.isArray(game.results))game=newGame();}catch{game=newGame();}
+const ACTIVE_KEY="motor-escenario-activo-v2";
+const gameKey=id=>CONFIG.storageKey+"-scenario-"+id;
+function readGame(id){
+  let data=null;
+  try{
+    const raw=localStorage.getItem(gameKey(id))||(id==="porter"?localStorage.getItem(CONFIG.storageKey):null);
+    data=raw?JSON.parse(raw):null;
+    if(!data||!Array.isArray(data.teams)||data.teams.length!==4||!Array.isArray(data.results)||!Number.isInteger(data.round)||data.round<1||data.round>5||!["decisions","results"].includes(data.phase))return newGame();
+    if((data.scenarioId||"porter")!==id)return newGame();
+    data.scenarioId=id;
+    return data;
+  }catch{return newGame();}
+}
+activateScenario(localStorage.getItem(ACTIVE_KEY)||"porter");
+let game=readGame(CONFIG.id);
 let selected=null,message="";
-const save=()=>localStorage.setItem(CONFIG.storageKey,JSON.stringify(game));
+const save=()=>{
+  localStorage.setItem(gameKey(CONFIG.id),JSON.stringify(game));
+  localStorage.setItem(ACTIVE_KEY,CONFIG.id);
+};
+function switchScenario(id){
+  if(!SCENARIOS[id]||id===CONFIG.id)return;
+  if(!confirm("¿Cambiar de escenario? La partida actual se conservará por separado en este navegador."))return;
+  save();
+  activateScenario(id);
+  game=readGame(id);
+  selected=null;message="Escenario cambiado. Cada temática tiene su propia partida local.";
+  save();render();
+}
+window.addEventListener("storage",e=>{
+  if(e.key===ACTIVE_KEY&&e.newValue&&SCENARIOS[e.newValue]&&e.newValue!==CONFIG.id){
+    activateScenario(e.newValue);game=readGame(CONFIG.id);selected=null;message="El profesor ha cambiado de escenario. Se ha cargado la partida correspondiente.";render();
+  } else if(e.key===gameKey(CONFIG.id)){
+    game=readGame(CONFIG.id);render();
+  }
+});
 const note=(s)=>{message=s;render();};
 function layout(body){
   $("app").innerHTML='<div class="toplinks"><a class="linkbtn secondary" href="./">Portal del alumnado</a><a class="linkbtn secondary" href="./profesor.html">Panel del profesor</a></div>'+
   (message?'<div class="alert" role="status">'+esc(message)+'</div>':"")+
-  '<div class="card"><h2>Ronda '+game.round+' de 5 · '+esc(CONFIG.rounds[game.round-1].title)+'</h2><p>'+esc(CONFIG.rounds[game.round-1].description)+'</p><p class="muted">Estado: '+(game.phase==="decisions"?"Recepción de decisiones":"Resultados publicados")+'</p></div>'+body+
-  '<footer>Versión 1 · DEMOSTRACIÓN LOCAL. Los portales comparten datos solo cuando se abren en el mismo navegador y dispositivo. Sin autenticación segura ni sincronización multiusuario.</footer>';
+  '<div class="card"><h2>'+esc(CONFIG.title)+'</h2><p>'+esc(CONFIG.description)+'</p><h3>Ronda '+game.round+' de 5 · '+esc(CONFIG.rounds[game.round-1].title)+'</h2><p>'+esc(CONFIG.rounds[game.round-1].description)+'</p><p class="muted">Estado: '+(game.phase==="decisions"?"Recepción de decisiones":"Resultados publicados")+'</p></div>'+body+
+  '<footer>Versión 2 · DEMOSTRACIÓN LOCAL. Los portales comparten datos solo cuando se abren en el mismo navegador y dispositivo. Sin autenticación segura ni sincronización multiusuario.</footer>';
 }
 function cards(t){return '<div class="grid">'+[
  ["Tesorería",euros(t.cash)],["Calidad",t.quality.toFixed(1)+"/100"],["Marca",t.brand.toFixed(1)+"/100"],
@@ -28,7 +61,7 @@ function csvDownload(filename,text){
  link.href=url;link.download=filename;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),500);
 }
 function teacher(){
- let body='<div class="card"><h2>Panel de control</h2><div class="grid"><div class="metric">Decisiones entregadas<b>'+game.teams.filter(t=>t.submitted).length+'/4</b></div><div class="metric">Partida<b>'+game.round+'/5</b></div></div>'+
+ let body='<div class="card"><h2>Elegir simulación estratégica</h2><label for="scenario">Escenario activo</label><select id="scenario">'+Object.values(SCENARIOS).map(s=>'<option value="'+s.id+'" '+(s.id===CONFIG.id?'selected':'')+'>'+esc(s.title)+'</option>').join('')+'</select><p class="muted">Cada escenario conserva su propia partida en este navegador. Al cambiar, las demás pestañas abiertas se actualizan.</p></div><div class="card"><h2>Panel de control</h2><div class="grid"><div class="metric">Decisiones entregadas<b>'+game.teams.filter(t=>t.submitted).length+'/4</b></div><div class="metric">Partida<b>'+game.round+'/5</b></div></div>'+
  '<label for="event">Acontecimiento de mercado</label><select id="event" '+(game.phase==="results"?"disabled":"")+'>'+Object.entries(CONFIG.events).map(([id,v])=>'<option value="'+id+'" '+(game.event===id?"selected":"")+'>'+esc(v.name)+'</option>').join("")+'</select>'+
  '<p><button id="calculate" '+(game.phase!=="decisions"||game.teams.some(t=>!t.submitted)?"disabled":"")+'>Calcular y publicar resultados</button>'+
  '<button id="next" class="secondary" '+(game.phase!=="results"||game.round===5?"disabled":"")+'>Abrir siguiente ronda</button></p>'+
@@ -39,6 +72,7 @@ function teacher(){
  if(game.results.length)body+=resultsTable(game.results.at(-1));
  if(game.results.length)body+='<div class="card"><h2>Clasificación acumulada</h2><ol>'+ranking(game).map(t=>'<li>'+esc(t.name)+' · '+t.score+' puntos · '+euros(t.cash)+'</li>').join("")+'</ol></div>';
  layout(body);
+ $("scenario").onchange=e=>switchScenario(e.target.value);
  $("event").onchange=e=>{game.event=e.target.value;save();render();};
  $("calculate").onclick=()=>{try{game=calculate(game);save();note("Ronda calculada. Resultados disponibles en este navegador.");}catch(e){note(e.message);}};
  $("next").onclick=()=>{try{game=advance(game);save();message="";render();}catch(e){note(e.message);}};
@@ -46,7 +80,7 @@ function teacher(){
  $("export").onclick=()=>{
  const rows=[["ronda","empresa","estrategia","ventas","cuota","ingresos","resultado_operativo","tesoreria","puntos"]];
  game.results.forEach(g=>g.rows.forEach(r=>rows.push([g.round,r.name,r.strategy,r.sold,r.share,r.revenue,r.operating,r.cash,r.score])));
- csvDownload("resultados-estrategia.csv","\uFEFF"+rows.map(row=>row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(";")).join("\n"));
+ csvDownload("resultados-"+CONFIG.id+".csv","\uFEFF"+rows.map(row=>row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(";")).join("\n"));
  };
 }
 function student(){
