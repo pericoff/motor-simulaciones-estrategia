@@ -1,8 +1,8 @@
 # Motor de simulaciones de estrategia empresarial
 
-**Versión 0.2: demostración funcional con tres escenarios configurables.**
+**Versión 0.3: tres escenarios predefinidos y un cuarto escenario editable desde el panel docente.**
 
-Aplicación educativa de 4 empresas y 5 rondas, con escenarios de **Porter**, **expansión internacional** e **innovación y disrupción**. Cada escenario cuenta con narrativas, eventos, estrategias, coeficientes y etiquetas de decisiones propios. El motor integra decisiones de precios, marketing, calidad, eficiencia, innovación y capacidad productiva. El motor transforma inversiones en capacidades acumuladas, calcula demanda competitiva, ventas, beneficios, tesorería y puntuaciones.
+Aplicación educativa de 4 empresas y 5 rondas, con escenarios de **Porter**, **expansión internacional** e **innovación y disrupción**. Cada escenario cuenta con narrativas, eventos, estrategias, coeficientes y etiquetas de decisiones propios. El cuarto escenario se puede configurar sin editar código. El motor integra decisiones de precios, marketing, calidad, eficiencia, innovación y capacidad productiva. El motor transforma inversiones en capacidades acumuladas, calcula demanda competitiva, ventas, beneficios, tesorería y puntuaciones.
 
 ## Abrir la demostración
 
@@ -15,7 +15,7 @@ También puedes servir los archivos con un servidor web local. **No abras direct
 
 ## Prueba rápida
 
-1. En `profesor.html`, selecciona un escenario desde **Elegir simulación estratégica**. Cada escenario conserva una partida local independiente. Si estás migrando desde la versión 0.1, el escenario Porter conserva los datos locales existentes.
+1. En `profesor.html`, selecciona un escenario desde **Elegir simulación estratégica**. Elige **Mi cuarto escenario · Estrategia corporativa** para acceder al formulario de configuración. Cada escenario conserva una partida local independiente. Si estás migrando desde la versión 0.1, el escenario Porter conserva los datos locales existentes.
 2. En `profesor.html`, observa los códigos `EQUIPO1` a `EQUIPO4`.
 3. Abre el portal de alumnos en el **mismo navegador y dispositivo**.
 4. Accede sucesivamente a los cuatro equipos, toma las decisiones y envíalas.
@@ -31,7 +31,8 @@ Las fórmulas son un modelo docente simplificado, no predicciones económicas. L
 
 ## Archivos
 
-- `scenarios.js`: catálogo de Porter, expansión internacional e innovación.
+- `scenarios.js`: catálogo de Porter, expansión internacional, innovación y plantilla editable.
+- `scenario-editor.js`: formulario del profesor para personalizar el cuarto escenario.
 - `config.js`: activa las reglas y parámetros del escenario seleccionado.
 - `engine.js`: motor de cálculo separado de la interfaz.
 - `app.js`: navegación, decisiones, resultados y guardado local.
@@ -50,3 +51,11 @@ Ampliar el catálogo de escenarios, incorporar vídeos docentes, descarga/import
 ### Crear otro escenario
 
 Duplica una entrada en `scenarios.js`, asigna un `id` único y adapta los nombres de rondas, eventos, estrategias, decisiones y parámetros `model`. El motor reutiliza las seis dimensiones de decisión y sus capacidades; un escenario con otras variables o ecuaciones requerirá ampliar también `engine.js`. Cambiar el escenario desde el panel docente guarda cada partida en una clave local separada. El cambio no implica acceso compartido entre dispositivos.
+
+## Cuarto escenario editable
+
+En el panel docente, selecciona **Mi cuarto escenario · Estrategia corporativa**. Podrás cambiar nombre, sector, descripción, cinco rondas, nombres de tres estrategias, etiquetas de seis decisiones, eventos de mercado y once parámetros cuantitativos. Pulsa **Guardar configuración del escenario**.
+
+La configuración se guarda en `localStorage` del navegador actual. No se sube automáticamente a GitHub y no es accesible desde otros dispositivos. Reinicia la partida para poder editar cuando ya haya decisiones entregadas o resultados. Las variables internas del motor (precio, marketing, calidad, eficiencia, innovación, capacidad) siguen siendo las mismas: cambiar una etiqueta no introduce una variable nueva ni cambia las ecuaciones salvo que modifiques los parámetros expuestos.
+
+El formulario es una primera herramienta de autoría docente y no sustituye una solución multiusuario con base de datos.
