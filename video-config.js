@@ -1,6 +1,22 @@
 // Configuración de vídeos por escenario (almacenamiento local + portabilidad JSON).
 // Se aceptan únicamente URLs HTTPS de YouTube, Vimeo, Google Drive y archivos .mp4 HTTPS.
 export const VIDEO_KEY_PREFIX="motor-videos-v1-";
+let publishedVideos=Object.create(null);
+export async function loadPublishedVideos(fetcher=fetch){
+ try{
+  const response=await fetcher("./videos.json",{cache:"no-cache"});
+  if(!response.ok)return false;
+  const data=await response.json();
+  if(!data||typeof data!=="object"||Array.isArray(data))return false;
+  const next=Object.create(null);
+  for(const [id,value] of Object.entries(data)){
+   if(!/^[a-z0-9-]{1,80}$/.test(id))continue;
+   try{next[id]=validateVideoConfig(value);}catch{}
+  }
+  publishedVideos=next;return true;
+ }catch{return false;}
+}
+
 export const VIDEO_SLOTS=[
  {id:"presentation",label:"Vídeo 0 · Presentación general"},
  {id:"round1",label:"Vídeo 1 · Entorno empresarial"},
@@ -62,8 +78,8 @@ export function validateVideoConfig(input){
 export function readVideos(scenarioId,storage=localStorage){
  try{
   const raw=storage.getItem(videoKey(scenarioId));
-  return raw?validateVideoConfig(JSON.parse(raw)):blankVideoConfig();
- }catch{return blankVideoConfig();}
+  return raw?validateVideoConfig(JSON.parse(raw)):(publishedVideos[scenarioId]||blankVideoConfig());
+ }catch{return publishedVideos[scenarioId]||blankVideoConfig();}
 }
 export function writeVideos(scenarioId,config,storage=localStorage){
  const valid=validateVideoConfig(config);
