@@ -1,5 +1,6 @@
 import {REVIEW_ROUNDS,REVIEW_ID} from "./review-content.js";
 import {studentVideos} from "./video-ui.js";
+import {loadPublishedVideos} from "./video-config.js";
 const KEY="repaso-estrategia-individual-v1";
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const root=document.getElementById("app");
@@ -74,3 +75,4 @@ function render(){
  };
 }
 render();
+loadPublishedVideos().then(()=>render());
