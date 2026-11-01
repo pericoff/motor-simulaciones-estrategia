@@ -3,6 +3,8 @@ import {SCENARIOS,loadCustomScenario} from "./scenarios.js";
 import {LIBRARY_KEY,loadLibrary,createScenario,deleteScenario,exportScenario,importScenario,isEditableScenario} from "./scenario-library.js";
 import {renderScenarioEditor,bindScenarioEditor} from "./scenario-editor.js";
 import {newGame,euros,investment,validate,calculate,advance,ranking} from "./engine.js";
+import {isReview,reviewStudentPanel,bindStudentReview,reviewTeacherPanel,reviewCsvRows} from "./review-ui.js";
+import {reviewScore} from "./review-content.js";
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const portal=document.body.dataset.portal;
@@ -61,7 +63,7 @@ function layout(body){
   $("app").innerHTML='<div class="toplinks"><a class="linkbtn secondary" href="./">Portal del alumnado</a><a class="linkbtn secondary" href="./profesor.html">Panel del profesor</a></div>'+
   (message?'<div class="alert" role="status">'+esc(message)+'</div>':"")+
   '<div class="card"><h2>'+esc(CONFIG.title)+'</h2><p>'+esc(CONFIG.description)+'</p><h3>Ronda '+game.round+' de 5 · '+esc(CONFIG.rounds[game.round-1].title)+'</h3><p>'+esc(CONFIG.rounds[game.round-1].description)+'</p><p class="muted">Estado: '+(game.phase==="decisions"?"Recepción de decisiones":"Resultados publicados")+'</p></div>'+body+
-  '<footer>Versión 4 · DEMOSTRACIÓN LOCAL. Los portales comparten datos solo cuando se abren en el mismo navegador y dispositivo. Sin autenticación segura ni sincronización multiusuario.</footer>';
+  '<footer>Versión 5 · DEMOSTRACIÓN LOCAL. Los portales comparten datos solo cuando se abren en el mismo navegador y dispositivo. Sin autenticación segura ni sincronización multiusuario.</footer>';
 }
 function cards(t){return '<div class="grid">'+[
  ["Tesorería",euros(t.cash)],["Calidad",t.quality.toFixed(1)+"/100"],["Marca",t.brand.toFixed(1)+"/100"],
@@ -85,6 +87,7 @@ function teacher(){
  '<div class="card"><h2>Empresas y códigos</h2><div class="scroll"><table><thead><tr><th>Empresa</th><th>Código</th><th>Estado</th><th>Tesorería</th></tr></thead><tbody>'+
  game.teams.map(t=>'<tr><td>'+esc(t.name)+'</td><td><code>'+esc(t.code)+'</code></td><td>'+(t.submitted?"Entregado":"Pendiente")+'</td><td>'+euros(t.cash)+'</td></tr>').join("")+
  '</tbody></table></div></div>';
+ body+=reviewTeacherPanel(game);
  if(game.results.length)body+=resultsTable(game.results.at(-1));
  if(game.results.length)body+='<div class="card"><h2>Clasificación acumulada</h2><ol>'+ranking(game).map(t=>'<li>'+esc(t.name)+' · '+t.score+' puntos · '+euros(t.cash)+'</li>').join("")+'</ol></div>';
  layout(body);
@@ -134,6 +137,7 @@ function teacher(){
  $("export").onclick=()=>{
  const rows=[["ronda","empresa","estrategia","ventas","cuota","ingresos","resultado_operativo","tesoreria","puntos"]];
  game.results.forEach(g=>g.rows.forEach(r=>rows.push([g.round,r.name,r.strategy,r.sold,r.share,r.revenue,r.operating,r.cash,r.score])));
+ if(isReview(CONFIG.id)){rows.push([]);rows.push(["EQUIPO","T2-entorno","T2-interno","T3-objetivos","T4-estrategias","T5-decisiones","TOTAL-ACIERTOS"]);rows.push(...reviewCsvRows(game));}
  csvDownload("resultados-"+CONFIG.id+".csv","\uFEFF"+rows.map(row=>row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(";")).join("\n"));
  };
 }
@@ -145,9 +149,13 @@ function student(){
   return;
  }
  const t=game.teams.find(t=>t.id===selected),d=t.decision||Object.fromEntries(CONFIG.decisions.map(f=>[f.id,f.initial]));
+ const hasReview=isReview(CONFIG.id),reviewDone=!hasReview||!!reviewScore(t,game.round);
  let body='<div class="card"><h2>'+esc(t.name)+'</h2>'+cards(t)+'<button class="secondary" id="logout">Cambiar de equipo</button></div>';
+ if(hasReview)body+=reviewStudentPanel(t,game.round);
  if(game.phase==="results"){
   body+='<div class="success">El profesor ha publicado los resultados de la ronda.</div>'+resultsTable(game.results.at(-1));
+ }else if(!reviewDone){
+  body+='<div class="alert">Resuelve el reto de repaso para desbloquear las decisiones empresariales de esta ronda.</div>';
  }else if(t.submitted){
   body+='<div class="success">Decisiones entregadas. Espera a que el profesor calcule los resultados.</div>';
  }else{
@@ -158,6 +166,7 @@ function student(){
  if(t.history.length)body+='<div class="card"><h2>Historial de la empresa</h2><div class="scroll"><table><thead><tr><th>Ronda</th><th>Ventas</th><th>Resultado</th><th>Puntos</th></tr></thead><tbody>'+t.history.map(h=>'<tr><td>'+h.round+'</td><td>'+h.sold.toLocaleString("es-ES")+'</td><td>'+euros(h.operating)+'</td><td>'+h.score+'</td></tr>').join("")+'</tbody></table></div></div>';
  layout(body);
  $("logout").onclick=()=>{selected=null;message="";render();};
+ if(hasReview)bindStudentReview(t,game.round,()=>{save();note("Repaso corregido. Lee el feedback antes de enviar tus decisiones económicas.");},err=>note(err));
  const form=$("decisionForm");
  if(form){
   const read=()=>Object.fromEntries([["strategy",form.elements.strategy.value],...CONFIG.decisions.map(f=>[f.id,Number(form.elements[f.id].value)])]);
