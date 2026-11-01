@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {parseVideoUrl,blankVideoConfig,validateVideoConfig,writeVideos,readVideos,exportVideoConfig,importVideoConfig} from "../video-config.js";
+import {parseVideoUrl,blankVideoConfig,validateVideoConfig,writeVideos,readVideos,exportVideoConfig,importVideoConfig,loadPublishedVideos} from "../video-config.js";
 
 function memoryStorage(){
  const data=new Map();
@@ -38,4 +38,17 @@ test("configuración inválida no sobrescribe enlaces guardados",()=>{
  writeVideos("porter",conf,storage);
  assert.throws(()=>writeVideos("porter",{...conf,round2:"https://fake.test/video"},storage));
  assert.equal(readVideos("porter",storage).round1,conf.round1);
+});
+
+test("configuración pública compartida y prioridad de los ajustes locales",async()=>{
+ const published=blankVideoConfig();
+ published.presentation="https://youtu.be/_DbF1xeQ8cU";
+ const loaded=await loadPublishedVideos(async()=>({ok:true,json:async()=>({porter:published})}));
+ assert.equal(loaded,true);
+ const storage=memoryStorage();
+ assert.equal(readVideos("porter",storage).presentation,published.presentation);
+ const local=blankVideoConfig();local.round1="https://vimeo.com/123456789";
+ writeVideos("porter",local,storage);
+ assert.equal(readVideos("porter",storage).presentation,"");
+ assert.equal(readVideos("porter",storage).round1,local.round1);
 });
