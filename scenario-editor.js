@@ -1,14 +1,15 @@
 import {CONFIG} from "./config.js";
 import {defaultCustomScenario,saveCustomScenario} from "./scenarios.js";
+import {isEditableScenario,updateScenario} from "./scenario-library.js";
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const input=(name,label,value,type="text",extra="")=>'<div><label for="'+name+'">'+esc(label)+'</label><input id="'+name+'" name="'+name+'" type="'+type+'" value="'+esc(value)+'" '+extra+' required></div>';
 const textarea=(name,label,value)=>'<div><label for="'+name+'">'+esc(label)+'</label><textarea id="'+name+'" name="'+name+'" maxlength="600" required>'+esc(value)+'</textarea></div>';
 const number=(name,label,value,min,max,step)=>input(name,label,value,"number",'min="'+min+'" max="'+max+'" step="'+step+'"');
 export function renderScenarioEditor(game){
- if(CONFIG.id!=="custom")return "";
+ if(!isEditableScenario(CONFIG.id))return "";
  const started=game.results.length>0||game.teams.some(t=>t.submitted);
  const s=CONFIG;
- let out='<div class="card"><h2>Editor del cuarto escenario</h2><p>Personaliza la temática y las reglas del modelo sin modificar código. Los cambios se guardan en este navegador, no en GitHub ni en otros equipos.</p>';
+ let out='<div class="card"><h2>Editor de simulación personalizada</h2><p>Personaliza la temática y las reglas del modelo sin modificar código. Los cambios se guardan en este navegador, no en GitHub ni en otros equipos.</p>';
  if(started)return out+'<div class="alert">Hay decisiones entregadas o resultados calculados. Para evitar alterar la partida, utiliza «Reiniciar demostración» antes de editar.</div></div>';
  out+='<form id="scenarioEditor">'+input("scenario_title","Nombre de la simulación",s.title,"text",'maxlength="100"')+
  input("scenario_sector","Sector o contexto",s.sector,"text",'maxlength="100"')+
@@ -49,7 +50,7 @@ export function bindScenarioEditor(game,onSaved,onError){
  const form=document.getElementById("scenarioEditor");
  if(!form)return;
  function apply(s){
-  try{saveCustomScenario(s);onSaved();}catch(e){onError(e.message);}
+  try{if(s.id==="custom")saveCustomScenario(s);else updateScenario(s);onSaved();}catch(e){onError(e.message);}
  }
  form.onsubmit=e=>{
   e.preventDefault();
@@ -68,6 +69,6 @@ export function bindScenarioEditor(game,onSaved,onError){
   apply(s);
  };
  document.getElementById("restoreScenario").onclick=()=>{
-  if(confirm("¿Restaurar la configuración del cuarto escenario? Se conservará la partida local sin cambios."))apply(defaultCustomScenario());
+  if(confirm("¿Restaurar los campos del escenario? Esto sustituirá su configuración actual.")){const fresh=defaultCustomScenario();fresh.id=CONFIG.id;apply(fresh);}
  };
 }
