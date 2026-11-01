@@ -82,6 +82,26 @@ export const SCENARIOS={
  }
 };
 
+
+SCENARIOS["repaso-temas-2-5"]={
+ ...structuredClone(SCENARIOS.porter),
+ id:"repaso-temas-2-5",
+ title:"Reto de repaso · Estrategia y Dirección de Empresas",
+ sector:"Empresa industrial ficticia TECNOVA",
+ description:"Cinco rondas de decisiones y repaso aplicado de los temas 2, 3, 4 y 5: entorno, análisis interno, objetivos, estrategias y métodos de decisión.",
+ rounds:[
+  {title:"Entorno empresarial y cinco fuerzas",description:"Tema 2: detecta factores externos, fuerzas competitivas y turbulencia."},
+  {title:"Análisis interno y sostenibilidad",description:"Tema 2: identifica actividades de valor, DAFO, capacidades distintivas y circularidad."},
+  {title:"Objetivos y creación de valor",description:"Tema 3: misión, SMART, rentabilidad económica y apalancamiento."},
+  {title:"Estrategia competitiva",description:"Tema 4: costes, diferenciación, enfoque y coherencia de implantación."},
+  {title:"Toma de decisiones",description:"Tema 5: factores ponderados, riesgo, árboles y criterios de incertidumbre."}
+ ],
+ strategies:structuredClone(SCENARIOS.porter.strategies),
+ decisions:SCENARIOS.porter.decisions.map(x=>({...x})),
+ events:structuredClone(SCENARIOS.porter.events),
+ model:{...SCENARIOS.porter.model}
+};
+
 const CUSTOM_KEY="motor-escenario-personalizado-v1";
 const customTemplate=()=>({
  ...structuredClone(SCENARIOS.porter),
