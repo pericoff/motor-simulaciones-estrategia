@@ -19,3 +19,5 @@ jobs:
           node --check review-content.js
           node --check review-ui.js
           node --check review-solo.js
+          node --check video-config.js
+          node --check video-ui.js
