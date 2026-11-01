@@ -75,3 +75,28 @@ En el panel docente, sección **Biblioteca de simulaciones**:
 El sistema crea un identificador nuevo para cada importación y evita sobrescribir diseños anteriores. Las partidas también se almacenan de manera independiente por escenario. El editor bloquea cambios cuando existen decisiones entregadas o resultados, por coherencia didáctica.
 
 **Limitaciones:** almacenamiento local por navegador (hasta 50 diseños adicionales), sin sincronización en la nube. Crea copias JSON periódicamente. El motor comparte seis variables económicas fijas; un cambio de etiquetas no añade nuevas ecuaciones. Para un sistema multiusuario con usuarios reales y biblioteca docente compartida hace falta un servidor o base de datos con autorización.
+
+## Simulación de repaso de los temas 2-5 (versión 0.5)
+
+Se añade el escenario **Reto de repaso · Estrategia y Dirección de Empresas** a partir del material docente facilitado (Tema 2, Tema 3, Tema 4 y Tema 5).
+
+**Cinco rondas y contenidos:**
+1. Entorno genérico y específico, cinco fuerzas competitivas y turbulencia (Tema 2).
+2. Cadena de valor, DAFO, capacidades distintivas, RSC y economía circular (Tema 2).
+3. Misión, objetivos SMART, rentabilidad económica y apalancamiento financiero (Tema 3).
+4. Liderazgo en costes, diferenciación, segmentación y coherencia de implantación (Tema 4).
+5. Factores ponderados, árbol de decisión y criterios en incertidumbre (Tema 5).
+
+**Uso:**
+1. En el portal del profesor, en el selector, elige **Reto de repaso · Estrategia y Dirección de Empresas**.
+2. En la misma computadora y navegador, entra con el código EQUIPO1 desde el portal del alumnado.
+3. Contesta las cuatro cuestiones del reto académico. Al pulsar **Corregir mi repaso**, verás la corrección razonada y la referencia a las diapositivas originales.
+4. Cuando termines el repaso, podrás enviar las decisiones económicas de la ronda.
+5. Repite con EQUIPO2, EQUIPO3 y EQUIPO4. En el panel docente, actualiza la página si es necesario, comprueba los aciertos y calcula los resultados.
+6. Avanza de ronda hasta la quinta. La exportación CSV incorpora un resumen de las puntuaciones académicas y los resultados financieros.
+
+**Interpretación:** hay dos resultados diferentes: puntuación de repaso (aciertos sobre las preguntas) y puntuación económica de la simulación (motor competitivo). Las respuestas al repaso no alteran arbitrariamente las ventas ni la tesorería; funcionan como requisito de aprendizaje previo a la decisión. Todas las preguntas ofrecen feedback y referencia a la unidad docente.
+
+La simulación representa un caso industrial ficticio de TECNOVA y usa coeficientes de un modelo docente, no datos empresariales reales. El repaso se basa en los temas facilitados; no reproduce literalmente sus diapositivas.
+
+**Limitación:** al igual que las demás simulaciones de la versión actual, esta actividad es una **demostración local**. Los equipos no pueden enviar sus respuestas desde equipos independientes a un profesor en otro ordenador sin implementar primero el backend multiusuario.
