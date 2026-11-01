@@ -16,3 +16,6 @@ jobs:
           node --check app.js
           node --check scenarios.js
           node --check engine.js
+          node --check review-content.js
+          node --check review-ui.js
+          node --check review-solo.js
