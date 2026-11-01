@@ -1,8 +1,8 @@
 # Motor de simulaciones de estrategia empresarial
 
-**Versión 0.1: demostración funcional de estrategias competitivas de Porter.**
+**Versión 0.2: demostración funcional con tres escenarios configurables.**
 
-Aplicación educativa de 4 empresas y 5 rondas con decisiones de precios, marketing, calidad, eficiencia, innovación y capacidad productiva. El motor transforma inversiones en capacidades acumuladas, calcula demanda competitiva, ventas, beneficios, tesorería y puntuaciones.
+Aplicación educativa de 4 empresas y 5 rondas, con escenarios de **Porter**, **expansión internacional** e **innovación y disrupción**. Cada escenario cuenta con narrativas, eventos, estrategias, coeficientes y etiquetas de decisiones propios. El motor integra decisiones de precios, marketing, calidad, eficiencia, innovación y capacidad productiva. El motor transforma inversiones en capacidades acumuladas, calcula demanda competitiva, ventas, beneficios, tesorería y puntuaciones.
 
 ## Abrir la demostración
 
@@ -15,12 +15,13 @@ También puedes servir los archivos con un servidor web local. **No abras direct
 
 ## Prueba rápida
 
-1. En `profesor.html`, observa los códigos `EQUIPO1` a `EQUIPO4`.
-2. Abre el portal de alumnos en el **mismo navegador y dispositivo**.
-3. Accede sucesivamente a los cuatro equipos, toma las decisiones y envíalas.
-4. Regresa al profesor y recarga la página: pulsa **Calcular y publicar resultados**.
-5. Consulta la clasificación, avanza a la siguiente ronda y repite hasta la quinta.
-6. Exporta los resultados CSV desde el panel docente.
+1. En `profesor.html`, selecciona un escenario desde **Elegir simulación estratégica**. Cada escenario conserva una partida local independiente. Si estás migrando desde la versión 0.1, el escenario Porter conserva los datos locales existentes.
+2. En `profesor.html`, observa los códigos `EQUIPO1` a `EQUIPO4`.
+3. Abre el portal de alumnos en el **mismo navegador y dispositivo**.
+4. Accede sucesivamente a los cuatro equipos, toma las decisiones y envíalas.
+5. Regresa al profesor y recarga la página: pulsa **Calcular y publicar resultados**.
+6. Consulta la clasificación, avanza a la siguiente ronda y repite hasta la quinta.
+7. Exporta los resultados CSV desde el panel docente.
 
 ## Limitaciones de seguridad y sincronización
 
@@ -30,7 +31,8 @@ Las fórmulas son un modelo docente simplificado, no predicciones económicas. L
 
 ## Archivos
 
-- `config.js`: escenario configurable de Porter, eventos, rondas, decisiones.
+- `scenarios.js`: catálogo de Porter, expansión internacional e innovación.
+- `config.js`: activa las reglas y parámetros del escenario seleccionado.
 - `engine.js`: motor de cálculo separado de la interfaz.
 - `app.js`: navegación, decisiones, resultados y guardado local.
 - `index.html` / `profesor.html`: portales.
@@ -39,8 +41,12 @@ Las fórmulas son un modelo docente simplificado, no predicciones económicas. L
 
 ## Pruebas
 
-Con Node.js instalado, ejecuta `npm test`. Los tests comprueban validaciones y una partida de cinco rondas. Los resultados deben verificarse también manualmente en el navegador.
+Con Node.js instalado, ejecuta `npm test`. Las pruebas comprueban validaciones y partidas completas de cinco rondas para los tres escenarios. Un workflow de GitHub Actions también ejecuta pruebas y análisis de sintaxis al subir cambios. Los resultados deben verificarse también manualmente en el navegador.
 
 ## Próxima iteración
 
-Introducir escenarios adicionales mediante módulos, vídeos docentes, descarga/importación de partidas, ajustes de nombres y acceso multiusuario seguro mediante backend.
+Ampliar el catálogo de escenarios, incorporar vídeos docentes, descarga/importación de partidas, edición de nombres y acceso multiusuario seguro mediante backend.
+
+### Crear otro escenario
+
+Duplica una entrada en `scenarios.js`, asigna un `id` único y adapta los nombres de rondas, eventos, estrategias, decisiones y parámetros `model`. El motor reutiliza las seis dimensiones de decisión y sus capacidades; un escenario con otras variables o ecuaciones requerirá ampliar también `engine.js`. Cambiar el escenario desde el panel docente guarda cada partida en una clave local separada. El cambio no implica acceso compartido entre dispositivos.
