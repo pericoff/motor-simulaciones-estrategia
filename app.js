@@ -44,7 +44,7 @@ const note=(s)=>{message=s;render();};
 function layout(body){
   $("app").innerHTML='<div class="toplinks"><a class="linkbtn secondary" href="./">Portal del alumnado</a><a class="linkbtn secondary" href="./profesor.html">Panel del profesor</a></div>'+
   (message?'<div class="alert" role="status">'+esc(message)+'</div>':"")+
-  '<div class="card"><h2>'+esc(CONFIG.title)+'</h2><p>'+esc(CONFIG.description)+'</p><h3>Ronda '+game.round+' de 5 · '+esc(CONFIG.rounds[game.round-1].title)+'</h2><p>'+esc(CONFIG.rounds[game.round-1].description)+'</p><p class="muted">Estado: '+(game.phase==="decisions"?"Recepción de decisiones":"Resultados publicados")+'</p></div>'+body+
+  '<div class="card"><h2>'+esc(CONFIG.title)+'</h2><p>'+esc(CONFIG.description)+'</p><h3>Ronda '+game.round+' de 5 · '+esc(CONFIG.rounds[game.round-1].title)+'</h3><p>'+esc(CONFIG.rounds[game.round-1].description)+'</p><p class="muted">Estado: '+(game.phase==="decisions"?"Recepción de decisiones":"Resultados publicados")+'</p></div>'+body+
   '<footer>Versión 2 · DEMOSTRACIÓN LOCAL. Los portales comparten datos solo cuando se abren en el mismo navegador y dispositivo. Sin autenticación segura ni sincronización multiusuario.</footer>';
 }
 function cards(t){return '<div class="grid">'+[
