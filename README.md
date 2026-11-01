@@ -100,3 +100,42 @@ Se añade el escenario **Reto de repaso · Estrategia y Dirección de Empresas**
 La simulación representa un caso industrial ficticio de TECNOVA y usa coeficientes de un modelo docente, no datos empresariales reales. El repaso se basa en los temas facilitados; no reproduce literalmente sus diapositivas.
 
 **Limitación:** al igual que las demás simulaciones de la versión actual, esta actividad es una **demostración local**. Los equipos no pueden enviar sus respuestas desde equipos independientes a un profesor en otro ordenador sin implementar primero el backend multiusuario.
+
+## Vídeos docentes: presentación y cinco rondas (versión 0.6)
+
+Se añade reproducción integrada en el portal de los equipos y en el repaso individual de los temas 2–5.
+
+### Configuración desde el panel docente
+
+1. Accede a [profesor.html](https://pericoff.github.io/motor-simulaciones-estrategia/profesor.html) y selecciona la simulación.
+2. Busca **Vídeos docentes · Presentación y cinco rondas**.
+3. Pega hasta seis enlaces (presentación general y vídeos de las rondas 1 a 5). Puedes dejar los demás vacíos.
+4. Pulsa **Guardar enlaces de vídeos**. Aparecerá una vista previa y los vídeos se reproducirán en las páginas de estudiante de **ese mismo navegador**.
+5. Pulsa **Exportar configuración JSON** para conservar la lista. En otro navegador usa **Importar configuración de vídeos (.json)**.
+
+Admite enlaces HTTPS de YouTube (incluidos youtu.be y shorts), Vimeo, archivos individuales de Google Drive y archivos MP4 directos. No admite carpetas de Drive ni otros proveedores. El enlace de Drive debe permitir a los alumnos visualizar el archivo. Algunos vídeos tienen restricciones de inserción o permisos y pueden requerir abrir el vídeo directamente en otra pestaña.
+
+Los seis campos son independientes para cada escenario. El vídeo de presentación se muestra en la primera ronda; el de cada ronda aparece cuando corresponde. **No se exige ver un vídeo para responder al repaso o enviar decisiones**, y la reproducción es manual.
+
+### Publicar vídeos para todos los estudiantes mediante GitHub Pages
+
+**Los cambios realizados en el panel se guardan solo en `localStorage` y no escriben en GitHub.** Para que todos los navegadores reciban los enlaces automáticamente, edita el archivo [videos.json](https://github.com/pericoff/motor-simulaciones-estrategia/blob/main/videos.json) de la rama principal y añade los enlaces en el bloque del identificador del escenario:
+
+```json
+{
+  "repaso-temas-2-5": {
+    "presentation": "https://youtu.be/VIDEO_PRESENTACION",
+    "round1": "https://youtu.be/VIDEO_1",
+    "round2": "",
+    "round3": "",
+    "round4": "",
+    "round5": ""
+  }
+}
+```
+
+El ejemplo anterior muestra solo el bloque de una simulación: **mantén los demás escenarios del archivo** al editarlo y usa enlaces reales válidos. Guarda los cambios con **Commit changes** en GitHub. Los estudiantes que abran la página después de la publicación cargarán esos enlaces; aquellos que tengan una configuración local anterior de ese mismo escenario seguirán viendo sus enlaces locales, que tienen prioridad.
+
+No hace falta instalar nada. La publicación es estática; no incorpora autenticación ni sincronización de decisiones. El panel del profesor no permite publicar los enlaces directamente en GitHub por razones de seguridad.
+
+Archivos: `video-config.js`, `video-ui.js`, `videos.json` y `pruebas/videos.test.mjs`.
