@@ -1,8 +1,8 @@
 # Motor de simulaciones de estrategia empresarial
 
-**Versión 0.3: tres escenarios predefinidos y un cuarto escenario editable desde el panel docente.**
+**Versión 0.4: generador de simulaciones con biblioteca de escenarios reutilizables.**
 
-Aplicación educativa de 4 empresas y 5 rondas, con escenarios de **Porter**, **expansión internacional** e **innovación y disrupción**. Cada escenario cuenta con narrativas, eventos, estrategias, coeficientes y etiquetas de decisiones propios. El cuarto escenario se puede configurar sin editar código. El motor integra decisiones de precios, marketing, calidad, eficiencia, innovación y capacidad productiva. El motor transforma inversiones en capacidades acumuladas, calcula demanda competitiva, ventas, beneficios, tesorería y puntuaciones.
+Aplicación educativa de 4 empresas y 5 rondas, con escenarios de **Porter**, **expansión internacional** e **innovación y disrupción**. Cada escenario cuenta con narrativas, eventos, estrategias, coeficientes y etiquetas de decisiones propios. Puedes crear hasta 50 escenarios adicionales, duplicar plantillas y guardarlos como archivos JSON. El motor integra decisiones de precios, marketing, calidad, eficiencia, innovación y capacidad productiva. El motor transforma inversiones en capacidades acumuladas, calcula demanda competitiva, ventas, beneficios, tesorería y puntuaciones.
 
 ## Abrir la demostración
 
@@ -32,7 +32,8 @@ Las fórmulas son un modelo docente simplificado, no predicciones económicas. L
 ## Archivos
 
 - `scenarios.js`: catálogo de Porter, expansión internacional, innovación y plantilla editable.
-- `scenario-editor.js`: formulario del profesor para personalizar el cuarto escenario.
+- `scenario-editor.js`: formulario del profesor para personalizar escenarios creados.
+- `scenario-library.js`: biblioteca local, duplicación, exportación, importación y borrado.
 - `config.js`: activa las reglas y parámetros del escenario seleccionado.
 - `engine.js`: motor de cálculo separado de la interfaz.
 - `app.js`: navegación, decisiones, resultados y guardado local.
@@ -59,3 +60,18 @@ En el panel docente, selecciona **Mi cuarto escenario · Estrategia corporativa*
 La configuración se guarda en `localStorage` del navegador actual. No se sube automáticamente a GitHub y no es accesible desde otros dispositivos. Reinicia la partida para poder editar cuando ya haya decisiones entregadas o resultados. Las variables internas del motor (precio, marketing, calidad, eficiencia, innovación, capacidad) siguen siendo las mismas: cambiar una etiqueta no introduce una variable nueva ni cambia las ecuaciones salvo que modifiques los parámetros expuestos.
 
 El formulario es una primera herramienta de autoría docente y no sustituye una solución multiusuario con base de datos.
+
+## Generador de simulaciones: biblioteca (versión 0.4)
+
+En el panel docente, sección **Biblioteca de simulaciones**:
+
+1. Selecciona una de las tres plantillas o el cuarto escenario editable.
+2. Pulsa **Crear nueva desde la actual**. El sistema crea un escenario con identificador propio y partida independiente.
+3. Utiliza el editor para cambiar el nombre, sector, cinco rondas, tres opciones estratégicas, etiquetas de decisiones, eventos y once parámetros del motor.
+4. Pulsa **Guardar configuración del escenario**.
+5. Para trasladar el diseño a otro ordenador, pulsa **Exportar JSON** y conserva el archivo; en el otro ordenador usa **Importar simulación desde archivo JSON**.
+6. Si ya no necesitas un escenario, utiliza **Eliminar escenario**. Los tres modelos predefinidos no pueden borrarse desde la interfaz.
+
+El sistema crea un identificador nuevo para cada importación y evita sobrescribir diseños anteriores. Las partidas también se almacenan de manera independiente por escenario. El editor bloquea cambios cuando existen decisiones entregadas o resultados, por coherencia didáctica.
+
+**Limitaciones:** almacenamiento local por navegador (hasta 50 diseños adicionales), sin sincronización en la nube. Crea copias JSON periódicamente. El motor comparte seis variables económicas fijas; un cambio de etiquetas no añade nuevas ecuaciones. Para un sistema multiusuario con usuarios reales y biblioteca docente compartida hace falta un servidor o base de datos con autorización.
