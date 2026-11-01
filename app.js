@@ -1,5 +1,6 @@
 import {CONFIG,activateScenario} from "./config.js";
 import {SCENARIOS,loadCustomScenario} from "./scenarios.js";
+import {LIBRARY_KEY,loadLibrary,createScenario,deleteScenario,exportScenario,importScenario,isEditableScenario} from "./scenario-library.js";
 import {renderScenarioEditor,bindScenarioEditor} from "./scenario-editor.js";
 import {newGame,euros,investment,validate,calculate,advance,ranking} from "./engine.js";
 const $=id=>document.getElementById(id);
@@ -19,6 +20,7 @@ function readGame(id){
   }catch{return newGame();}
 }
 loadCustomScenario();
+loadLibrary();
 activateScenario(localStorage.getItem(ACTIVE_KEY)||"porter");
 let game=readGame(CONFIG.id);
 let selected=null,message="";
@@ -36,6 +38,14 @@ function switchScenario(id){
   save();render();
 }
 window.addEventListener("storage",e=>{
+  if(e.key===LIBRARY_KEY){
+    loadLibrary();
+    if(!SCENARIOS[CONFIG.id]){
+      activateScenario("porter");game=readGame(CONFIG.id);selected=null;
+    }else{activateScenario(CONFIG.id);}
+    render();
+    return;
+  }
   if(e.key==="motor-escenario-personalizado-v1"){
     loadCustomScenario();
     if(CONFIG.id==="custom"){activateScenario("custom");message="Configuración del escenario actualizada en este navegador.";render();}
@@ -51,7 +61,7 @@ function layout(body){
   $("app").innerHTML='<div class="toplinks"><a class="linkbtn secondary" href="./">Portal del alumnado</a><a class="linkbtn secondary" href="./profesor.html">Panel del profesor</a></div>'+
   (message?'<div class="alert" role="status">'+esc(message)+'</div>':"")+
   '<div class="card"><h2>'+esc(CONFIG.title)+'</h2><p>'+esc(CONFIG.description)+'</p><h3>Ronda '+game.round+' de 5 · '+esc(CONFIG.rounds[game.round-1].title)+'</h3><p>'+esc(CONFIG.rounds[game.round-1].description)+'</p><p class="muted">Estado: '+(game.phase==="decisions"?"Recepción de decisiones":"Resultados publicados")+'</p></div>'+body+
-  '<footer>Versión 3 · DEMOSTRACIÓN LOCAL. Los portales comparten datos solo cuando se abren en el mismo navegador y dispositivo. Sin autenticación segura ni sincronización multiusuario.</footer>';
+  '<footer>Versión 4 · DEMOSTRACIÓN LOCAL. Los portales comparten datos solo cuando se abren en el mismo navegador y dispositivo. Sin autenticación segura ni sincronización multiusuario.</footer>';
 }
 function cards(t){return '<div class="grid">'+[
  ["Tesorería",euros(t.cash)],["Calidad",t.quality.toFixed(1)+"/100"],["Marca",t.brand.toFixed(1)+"/100"],
@@ -67,7 +77,7 @@ function csvDownload(filename,text){
  link.href=url;link.download=filename;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),500);
 }
 function teacher(){
- let body='<div class="card"><h2>Elegir simulación estratégica</h2><label for="scenario">Escenario activo</label><select id="scenario">'+Object.values(SCENARIOS).map(s=>'<option value="'+s.id+'" '+(s.id===CONFIG.id?'selected':'')+'>'+esc(s.title)+'</option>').join('')+'</select><p class="muted">Cada escenario conserva su propia partida en este navegador. Al cambiar, las demás pestañas abiertas se actualizan.</p></div><div class="card"><h2>Panel de control</h2><div class="grid"><div class="metric">Decisiones entregadas<b>'+game.teams.filter(t=>t.submitted).length+'/4</b></div><div class="metric">Partida<b>'+game.round+'/5</b></div></div>'+
+ let body='<div class="card"><h2>Biblioteca de simulaciones</h2><p class="muted">Crea tantas simulaciones de prueba como necesites (máximo 50 guardadas), duplica una plantilla, exporta o importa configuraciones JSON. Cada escenario conserva su partida local.</p><div class="toplinks"><button id="createScenario">Crear nueva desde la actual</button><button id="exportScenario" class="secondary" '+(isEditableScenario(CONFIG.id)?"":"disabled")+'>Exportar JSON</button><button id="deleteScenario" class="danger" '+(CONFIG.id.startsWith("user-")?"":"disabled")+'>Eliminar escenario</button></div><label for="importScenario">Importar simulación desde archivo JSON</label><input id="importScenario" type="file" accept=".json,application/json"><p class="muted">La biblioteca se guarda únicamente en este navegador. Exporta tus escenarios importantes para conservarlos o trasladarlos a otro equipo.</p></div><div class="card"><h2>Elegir simulación estratégica</h2><label for="scenario">Escenario activo</label><select id="scenario">'+Object.values(SCENARIOS).map(s=>'<option value="'+s.id+'" '+(s.id===CONFIG.id?'selected':'')+'>'+esc(s.title)+'</option>').join('')+'</select><p class="muted">Cada escenario conserva su propia partida en este navegador. Al cambiar, las demás pestañas abiertas se actualizan.</p></div><div class="card"><h2>Panel de control</h2><div class="grid"><div class="metric">Decisiones entregadas<b>'+game.teams.filter(t=>t.submitted).length+'/4</b></div><div class="metric">Partida<b>'+game.round+'/5</b></div></div>'+
  '<label for="event">Acontecimiento de mercado</label><select id="event" '+(game.phase==="results"?"disabled":"")+'>'+Object.entries(CONFIG.events).map(([id,v])=>'<option value="'+id+'" '+(game.event===id?"selected":"")+'>'+esc(v.name)+'</option>').join("")+'</select>'+
  '<p><button id="calculate" '+(game.phase!=="decisions"||game.teams.some(t=>!t.submitted)?"disabled":"")+'>Calcular y publicar resultados</button>'+
  '<button id="next" class="secondary" '+(game.phase!=="results"||game.round===5?"disabled":"")+'>Abrir siguiente ronda</button></p>'+
@@ -79,7 +89,44 @@ function teacher(){
  if(game.results.length)body+='<div class="card"><h2>Clasificación acumulada</h2><ol>'+ranking(game).map(t=>'<li>'+esc(t.name)+' · '+t.score+' puntos · '+euros(t.cash)+'</li>').join("")+'</ol></div>';
  layout(body);
  $("scenario").onchange=e=>switchScenario(e.target.value);
- bindScenarioEditor(game,()=>{activateScenario("custom");note("Cuarto escenario guardado. Ya puedes jugar con sus nuevas reglas.");},err=>note("Error al guardar: "+err));
+ $("createScenario").onclick=()=>{
+   try{
+     if(!confirm("¿Crear una copia nueva de esta simulación? La partida actual se conservará."))return;
+     save();
+     const scenario=createScenario(CONFIG.id);
+     activateScenario(scenario.id);game=readGame(scenario.id);selected=null;
+     save();note("Escenario creado. Cambia sus datos en el editor y guarda la configuración.");
+   }catch(e){note("No se pudo crear el escenario: "+e.message);}
+ };
+ $("exportScenario").onclick=()=>{
+   try{
+     const content=exportScenario(CONFIG.id);
+     const url=URL.createObjectURL(new Blob([content],{type:"application/json;charset=utf-8"}));
+     const link=document.createElement("a");link.href=url;link.download="simulacion-"+CONFIG.id+".json";
+     document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+   }catch(e){note(e.message);}
+ };
+ $("deleteScenario").onclick=()=>{
+   if(!CONFIG.id.startsWith("user-"))return;
+   if(!confirm("¿Eliminar este escenario de la biblioteca local? Se eliminará también su partida en este navegador. Exporta primero el JSON si quieres conservarlo."))return;
+   try{
+     const id=CONFIG.id;
+     deleteScenario(id);localStorage.removeItem(gameKey(id));
+     activateScenario("porter");game=readGame("porter");selected=null;
+     save();note("Escenario eliminado de la biblioteca.");
+   }catch(e){note(e.message);}
+ };
+ $("importScenario").onchange=async e=>{
+   const file=e.target.files?.[0];if(!file)return;
+   if(file.size>150000){note("El archivo supera el límite de 150 KB.");return;}
+   try{
+     const raw=await file.text();
+     const s=importScenario(raw);save();
+     activateScenario(s.id);game=readGame(s.id);selected=null;
+     save();note("Escenario importado correctamente. Puedes editarlo y jugar.");
+   }catch(err){note("No se pudo importar: "+err.message);}
+ };
+ bindScenarioEditor(game,()=>{activateScenario("custom");note("Configuración guardada. Ya puedes jugar con sus reglas.");},err=>note("Error al guardar: "+err));
  $("event").onchange=e=>{game.event=e.target.value;save();render();};
  $("calculate").onclick=()=>{try{game=calculate(game);save();note("Ronda calculada. Resultados disponibles en este navegador.");}catch(e){note(e.message);}};
  $("next").onclick=()=>{try{game=advance(game);save();message="";render();}catch(e){note(e.message);}};
