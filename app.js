@@ -1,5 +1,6 @@
 import {CONFIG,activateScenario} from "./config.js";
-import {SCENARIOS} from "./scenarios.js";
+import {SCENARIOS,loadCustomScenario} from "./scenarios.js";
+import {renderScenarioEditor,bindScenarioEditor} from "./scenario-editor.js";
 import {newGame,euros,investment,validate,calculate,advance,ranking} from "./engine.js";
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -17,6 +18,7 @@ function readGame(id){
     return data;
   }catch{return newGame();}
 }
+loadCustomScenario();
 activateScenario(localStorage.getItem(ACTIVE_KEY)||"porter");
 let game=readGame(CONFIG.id);
 let selected=null,message="";
@@ -34,6 +36,10 @@ function switchScenario(id){
   save();render();
 }
 window.addEventListener("storage",e=>{
+  if(e.key==="motor-escenario-personalizado-v1"){
+    loadCustomScenario();
+    if(CONFIG.id==="custom"){activateScenario("custom");message="Configuración del escenario actualizada en este navegador.";render();}
+  }
   if(e.key===ACTIVE_KEY&&e.newValue&&SCENARIOS[e.newValue]&&e.newValue!==CONFIG.id){
     activateScenario(e.newValue);game=readGame(CONFIG.id);selected=null;message="El profesor ha cambiado de escenario. Se ha cargado la partida correspondiente.";render();
   } else if(e.key===gameKey(CONFIG.id)){
@@ -45,7 +51,7 @@ function layout(body){
   $("app").innerHTML='<div class="toplinks"><a class="linkbtn secondary" href="./">Portal del alumnado</a><a class="linkbtn secondary" href="./profesor.html">Panel del profesor</a></div>'+
   (message?'<div class="alert" role="status">'+esc(message)+'</div>':"")+
   '<div class="card"><h2>'+esc(CONFIG.title)+'</h2><p>'+esc(CONFIG.description)+'</p><h3>Ronda '+game.round+' de 5 · '+esc(CONFIG.rounds[game.round-1].title)+'</h3><p>'+esc(CONFIG.rounds[game.round-1].description)+'</p><p class="muted">Estado: '+(game.phase==="decisions"?"Recepción de decisiones":"Resultados publicados")+'</p></div>'+body+
-  '<footer>Versión 2 · DEMOSTRACIÓN LOCAL. Los portales comparten datos solo cuando se abren en el mismo navegador y dispositivo. Sin autenticación segura ni sincronización multiusuario.</footer>';
+  '<footer>Versión 3 · DEMOSTRACIÓN LOCAL. Los portales comparten datos solo cuando se abren en el mismo navegador y dispositivo. Sin autenticación segura ni sincronización multiusuario.</footer>';
 }
 function cards(t){return '<div class="grid">'+[
  ["Tesorería",euros(t.cash)],["Calidad",t.quality.toFixed(1)+"/100"],["Marca",t.brand.toFixed(1)+"/100"],
@@ -73,6 +79,7 @@ function teacher(){
  if(game.results.length)body+='<div class="card"><h2>Clasificación acumulada</h2><ol>'+ranking(game).map(t=>'<li>'+esc(t.name)+' · '+t.score+' puntos · '+euros(t.cash)+'</li>').join("")+'</ol></div>';
  layout(body);
  $("scenario").onchange=e=>switchScenario(e.target.value);
+ bindScenarioEditor(game,()=>{activateScenario("custom");note("Cuarto escenario guardado. Ya puedes jugar con sus nuevas reglas.");},err=>note("Error al guardar: "+err));
  $("event").onchange=e=>{game.event=e.target.value;save();render();};
  $("calculate").onclick=()=>{try{game=calculate(game);save();note("Ronda calculada. Resultados disponibles en este navegador.");}catch(e){note(e.message);}};
  $("next").onclick=()=>{try{game=advance(game);save();message="";render();}catch(e){note(e.message);}};
