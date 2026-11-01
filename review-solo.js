@@ -1,4 +1,5 @@
-import {REVIEW_ROUNDS} from "./review-content.js";
+import {REVIEW_ROUNDS,REVIEW_ID} from "./review-content.js";
+import {studentVideos} from "./video-ui.js";
 const KEY="repaso-estrategia-individual-v1";
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const root=document.getElementById("app");
@@ -22,6 +23,7 @@ function render(){
  '<p class="muted">Los resultados se guardan en este navegador y no se envían al profesor.</p></div>'+
  '<div class="card"><h2>Elegir bloque de repaso</h2><div class="toplinks">'+REVIEW_ROUNDS.map((r,i)=>'<button type="button" class="'+(current===i+1?'':'secondary')+'" data-round="'+(i+1)+'">'+(i+1)+'. '+esc(r.topic)+(score(i+1)?' ✓':'')+'</button>').join('')+'</div></div>';
  const activity=REVIEW_ROUNDS[current-1],result=score(current);
+ html+=studentVideos(REVIEW_ID,current,current===1);
  html+='<div class="card"><p class="muted">'+esc(activity.topic)+' · Bloque '+current+' de 5</p><h2>'+esc(activity.title)+'</h2><p>'+esc(activity.context)+'</p>';
  if(!result){
   html+='<form id="soloForm">';
