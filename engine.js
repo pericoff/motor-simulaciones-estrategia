@@ -2,7 +2,7 @@ import {CONFIG} from "./config.js";
 export const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 export const euros=n=>Number(n).toLocaleString("es-ES",{style:"currency",currency:"EUR",maximumFractionDigits:0});
 export function newGame(){
-  return {round:1,phase:"decisions",event:"normal",teams:Array.from({length:4},(_,i)=>({
+  return {scenarioId:CONFIG.id,round:1,phase:"decisions",event:"normal",teams:Array.from({length:4},(_,i)=>({
     id:i+1,name:"Empresa "+(i+1),code:"EQUIPO"+(i+1),cash:250000,
     quality:50,brand:50,efficiency:50,innovation:40,capacity:15000,
     decision:null,submitted:false,history:[]
@@ -19,23 +19,31 @@ export function validate(t,d){
   return "";
 }
 export function calculate(game){
+  if((game.scenarioId||"porter")!==CONFIG.id)throw Error("La partida no corresponde al escenario actual.");
   if(game.phase!=="decisions"||game.teams.some(t=>!t.submitted||validate(t,t.decision)))throw Error("Faltan decisiones válidas de las cuatro empresas.");
-  const ev=CONFIG.events[game.event],market=Math.round(50000*ev.demand);
+  const ev=CONFIG.events[game.event];
+  if(!ev)throw Error("Acontecimiento no válido.");
+  const m=CONFIG.model,market=Math.round(m.market*ev.demand);
   const plans=game.teams.map(t=>{
     const d=t.decision;
     const quality=clamp(t.quality+d.quality/2600,0,100);
     const brand=clamp(t.brand+d.marketing/2600,0,100);
     const efficiency=clamp(t.efficiency+d.efficiency/2400,0,100);
     const innovation=clamp(t.innovation+d.innovation/2400,0,100);
-    const capacity=t.capacity+d.capacity/2,price=Number(d.price),unitCost=Math.max(37,(89-efficiency*.32)*ev.cost);
-    const strategy=d.strategy==="cost"?(price<=100?1.15:.92):d.strategy==="different"?(quality>=55?1.14:.94):(price>=95&&price<=135?1.11:1.01);
-    const weight=Math.max(.01,Math.exp(-(price-100)/38)*(1+(quality-50)*(.012+ev.quality*.022))*(1+(innovation-40)*(.008+ev.innovation*.025))*(1+(brand-50)*.011)*strategy);
+    const capacity=t.capacity+d.capacity*m.capacityFactor,price=Number(d.price),unitCost=Math.max(37,(m.baseCost-efficiency*m.efficiencyCostEffect)*ev.cost);
+    const trait=CONFIG.strategies.find(s=>s.id===d.strategy)?.trait;
+    const index={quality,brand,efficiency,innovation,capacity:Math.min(100,capacity/225)}[trait]||50;
+    const strategy=1+(index-45)/55*m.alignmentBonus;
+    const weight=Math.max(.01,Math.exp(-(price-m.baselinePrice)/m.priceSensitivity)*
+      (1+(quality-50)*(m.qualityEffect+ev.quality*.022))*
+      (1+(innovation-40)*(m.innovationEffect+ev.innovation*.025))*
+      (1+(brand-50)*m.marketingEffect)*strategy);
     return {t,d,quality,brand,efficiency,innovation,capacity,price,unitCost,weight};
   });
   const total=plans.reduce((s,p)=>s+p.weight,0);
   const rows=plans.map(p=>{
     const sold=Math.max(0,Math.round(Math.min(p.capacity,market*p.weight/total)));
-    const revenue=sold*p.price,operating=revenue-sold*p.unitCost-18000;
+    const revenue=sold*p.price,operating=revenue-sold*p.unitCost-m.fixedCost;
     const cash=Math.round(p.t.cash-investment(p.d)+operating);
     const share=sold/market*100,margin=revenue?operating/revenue*100:0;
     const score=Math.round((clamp(share*1.25,0,40)+clamp(margin*.55,0,25)+p.quality*.13+p.innovation*.13)*10)/10;
