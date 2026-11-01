@@ -6,6 +6,7 @@ import {newGame,euros,investment,validate,calculate,advance,ranking} from "./eng
 import {isReview,reviewStudentPanel,bindStudentReview,reviewTeacherPanel,reviewCsvRows} from "./review-ui.js";
 import {reviewScore} from "./review-content.js";
 import {studentVideos,teacherVideoSettings,bindTeacherVideoSettings} from "./video-ui.js";
+import {loadPublishedVideos} from "./video-config.js";
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const portal=document.body.dataset.portal;
@@ -181,3 +182,4 @@ function student(){
 }
 function render(){portal==="profesor"?teacher():student();}
 render();
+loadPublishedVideos().then(()=>render());
