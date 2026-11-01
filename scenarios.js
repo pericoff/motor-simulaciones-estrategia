@@ -81,4 +81,62 @@ export const SCENARIOS={
   model:{market:58000,baseCost:82,priceSensitivity:48,baselinePrice:110,fixedCost:27000,marketingEffect:.014,qualityEffect:.017,innovationEffect:.019,efficiencyCostEffect:.30,capacityFactor:.65,alignmentBonus:.24}
  }
 };
+
+const CUSTOM_KEY="motor-escenario-personalizado-v1";
+const customTemplate=()=>({
+ ...structuredClone(SCENARIOS.porter),
+ id:"custom",title:"Mi cuarto escenario · Estrategia corporativa",
+ sector:"Grupos empresariales",
+ description:"Diseña un nuevo contexto estratégico, redefine las decisiones y configura las condiciones de mercado.",
+ rounds:[
+  {title:"Análisis corporativo",description:"Define el ámbito de negocio y los objetivos de la empresa."},
+  {title:"Recursos y sinergias",description:"Distribuye recursos entre las actividades prioritarias."},
+  {title:"Desarrollo empresarial",description:"Evalúa expansión y nuevas oportunidades."},
+  {title:"Cambio del entorno",description:"Adapta el conjunto empresarial a un shock competitivo."},
+  {title:"Cartera y consolidación",description:"Revisa el crecimiento, la rentabilidad y las capacidades."}
+ ],
+ strategies:[
+  {id:"cost",name:"Especialización",trait:"efficiency"},
+  {id:"different",name:"Diversificación relacionada",trait:"quality"},
+  {id:"focus",name:"Diversificación no relacionada",trait:"brand"}
+ ],
+ decisions:SCENARIOS.porter.decisions.map((f,i)=>({...f,label:[
+   "Precio medio por unidad (€)","Inversión comercial (€)","Sinergias y calidad (€)",
+   "Eficiencia organizativa (€)","Innovación corporativa (€)","Crecimiento de capacidad (€)"
+ ][i]}))
+});
+export function validateCustomScenario(s){
+ if(!s||s.id!=="custom")throw Error("Identificador de escenario no válido.");
+ const bounded=(v,max)=>typeof v==="string"&&v.trim().length>0&&v.length<=max;
+ if(!bounded(s.title,100)||!bounded(s.sector,100)||!bounded(s.description,600))throw Error("Revisa nombre, sector y descripción.");
+ if(!Array.isArray(s.rounds)||s.rounds.length!==5||s.rounds.some(r=>!bounded(r.title,90)||!bounded(r.description,500)))throw Error("Debes definir cinco rondas válidas.");
+ if(!Array.isArray(s.strategies)||s.strategies.length!==3||s.strategies.some((x,i)=>x.id!==["cost","different","focus"][i]||!bounded(x.name,100)))throw Error("Define las tres estrategias.");
+ if(!Array.isArray(s.decisions)||s.decisions.length!==6||s.decisions.some((x,i)=>x.id!==SCENARIOS.porter.decisions[i].id||!bounded(x.label,100)))throw Error("Define seis decisiones.");
+ const m=s.model;
+ if(!m||Object.entries(SCENARIOS.porter.model).some(([key])=>!Number.isFinite(m[key])))throw Error("Parámetros económicos inválidos.");
+ if(m.market<1000||m.market>500000||m.baseCost<10||m.baseCost>200||m.fixedCost<0||m.fixedCost>250000||m.baselinePrice<50||m.baselinePrice>160||m.priceSensitivity<10||m.priceSensitivity>100)throw Error("Los valores económicos están fuera de rango.");
+ for(const key of ["marketingEffect","qualityEffect","innovationEffect","efficiencyCostEffect","capacityFactor","alignmentBonus"]){
+  if(m[key]<0||m[key]>2)throw Error("El parámetro "+key+" está fuera de rango.");
+ }
+ if(!s.events||Object.keys(s.events).join(",")!==Object.keys(SCENARIOS.porter.events).join(","))throw Error("Eventos incompletos.");
+ for(const event of Object.values(s.events)){
+  if(!bounded(event.name,100)||!Number.isFinite(event.demand)||event.demand<.5||event.demand>2||!Number.isFinite(event.cost)||event.cost<.5||event.cost>2||!Number.isFinite(event.quality)||event.quality<0||event.quality>1||!Number.isFinite(event.innovation)||event.innovation<0||event.innovation>1)throw Error("Evento fuera de rango.");
+ }
+ return s;
+}
+export function loadCustomScenario(){
+ let value=customTemplate();
+ try{const raw=localStorage.getItem(CUSTOM_KEY);if(raw)value=validateCustomScenario(JSON.parse(raw));}catch{value=customTemplate();}
+ SCENARIOS.custom=value;
+ return value;
+}
+export function saveCustomScenario(s){
+ validateCustomScenario(s);
+ const next=structuredClone(s);
+ localStorage.setItem(CUSTOM_KEY,JSON.stringify(next));
+ SCENARIOS.custom=next;
+ return next;
+}
+export function defaultCustomScenario(){return customTemplate();}
+
 export function scenarioById(id){return SCENARIOS[id]||SCENARIOS.porter;}
